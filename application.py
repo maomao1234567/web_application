@@ -5,12 +5,15 @@ from urllib.parse import parse_qs
 from webob.request import Request
 from webob.response import Response
 from webob.dec import wsgify
-import flask
 
 
 class Application:
     def __init__(self, name):
         self.name = name
+
+    def run(self, host='127.0.0.1', port=8000):
+        server = make_server(host, port, self)
+        server.serve_forever()
 
     def __call__(self, environ, start_response):
         setup_testing_defaults(environ)
@@ -29,7 +32,9 @@ class Application:
         # query_params_dict = {
         #     k: v for k, _, v in map(lambda x: x.partition('='), query_params_list)}
         # query_params_dict = parse_qs(query_params)
+        return self.wsgi_app(environ, start_response)
 
+    def wsgi_app(self, environ, start_response):
         request = Request(environ)
 
         print(request.path)
@@ -42,6 +47,5 @@ class Application:
 
 
 if __name__ == '__main__':
-    with make_server('', 8000, Application('yangmao')) as httpd:
-        print('Serving on 8000')
-        httpd.serve_forever()
+    app = Application('my_web')
+    app.run()
